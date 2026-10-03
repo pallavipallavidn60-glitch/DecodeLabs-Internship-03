@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0f172a" />
+<title>Ultimate Password Generator</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Password%20Generator%22%2C%22short_name%22%3A%22PassGen%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%2338bdf8%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520rx%253D%2527100%2527%2520fill%253D%2527%25230f172a%2527%2F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527330%2527%2520font-size%253D%2527280%2527%2520text-anchor%253D%2527middle%2527%253E%25F0%259F%2594%2590%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
+<style>
+  :root {
+    --bg-1: #0f172a; --bg-2: #1e293b; --bg-3: #334155;
+    --card: rgba(30, 41, 59, 0.85); --border: rgba(148, 163, 184, 0.2);
+    --text: #e2e8f0; --muted: #94a3b8; --accent-1: #38bdf8; --accent-2: #a78bfa;
+    --success: #22c55e; --warn: #f59e0b; --danger: #ef4444;
+  }
+  body.light-mode {
+    --bg-1: #f1f5f9; --bg-2: #e2e8f0; --bg-3: #cbd5e1;
+    --card: rgba(255, 255, 255, 0.9); --border: rgba(100, 116, 139, 0.25);
+    --text: #0f172a; --muted: #475569;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--bg-1), var(--bg-2), var(--bg-3));
+    background-size: 300% 300%; animation: gradientShift 18s ease infinite;
+    padding: 20px; color: var(--text); transition: background 0.4s;
+  }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+
+  .container {
+    width: 100%; max-width: 720px; background: var(--card);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 22px; padding: 34px 32px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55), 0 0 40px rgba(59, 130, 246, 0.08);
+    position: relative; max-height: 96vh; overflow-y: auto;
+  }
+  .container::-webkit-scrollbar { width: 8px; }
+  .container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+
+  h1 {
+    font-size: 1.75rem;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .icon-btn {
+    background: var(--bg-1); border: 1px solid var(--border); color: var(--muted);
+    padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 1rem;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--accent-1); border-color: var(--accent-1); }
+
+  .subtitle { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 22px; letter-spacing: 0.4px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; margin-bottom: 22px; background: var(--bg-1); padding: 5px; border-radius: 12px; }
+  .tab {
+    flex: 1; text-align: center; padding: 10px; border-radius: 9px; cursor: pointer;
+    font-size: 0.85rem; color: var(--muted); transition: all 0.25s; font-weight: 600;
+  }
+  .tab.active { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: #0f172a; }
+
+  /* Presets */
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .preset-btn {
+    padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--bg-1); color: var(--muted); cursor: pointer; font-size: 0.78rem;
+    transition: all 0.2s; font-weight: 500;
+  }
+  .preset-btn:hover { color: var(--accent-1); border-color: var(--accent-1); transform: translateY(-2px); }
+  .preset-btn.active { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: #0f172a; border-color: transparent; }
+
+  /* Output */
+  .output-box {
+    position: relative; background: var(--bg-1); border: 2px solid var(--bg-3);
+    border-radius: 14px; padding: 18px 100px 18px 18px; margin-bottom: 8px;
+    font-family: 'Courier New', monospace; font-size: 1.12rem;
+    word-break: break-all; min-height: 62px;
+    display: flex; align-items: center; transition: border-color 0.3s;
+  }
+  .output-box.active { border-color: var(--accent-1); box-shadow: 0 0 22px rgba(56, 189, 248, 0.28); }
+  .output-box .placeholder { color: var(--bg-3); font-style: italic; font-size: 0.95rem; }
+
+  .output-actions { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; }
+  .output-actions button {
+    background: var(--bg-2); border: 1px solid var(--bg-3); color: var(--muted);
+    padding: 6px 9px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  .output-actions button:hover { color: var(--accent-1); border-color: var(--accent-1); }
+
+  /* Strength */
+  .strength-bar { height: 8px; background: var(--bg-1); border-radius: 5px; overflow: hidden; margin-bottom: 6px; margin-top: 10px; }
+  .strength-fill { height: 100%; width: 0%; border-radius: 5px; transition: width 0.5s, background 0.5s; }
+  .strength-text { font-size: 0.78rem; text-align: right; color: var(--muted); margin-bottom: 18px; }
+
+  /* Fields */
+  .field { margin-bottom: 18px; }
+  .field label { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text); margin-bottom: 10px; font-weight: 500; }
+  .field label span { color: var(--accent-1); font-weight: 700; }
+
+  input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: var(--bg-3); border-radius: 5px; outline: none; }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    cursor: pointer; box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    cursor: pointer; box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+  }
+
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .option {
+    display: flex; align-items: center; gap: 10px; background: var(--bg-1);
+    border: 1px solid var(--bg-3); padding: 11px 13px; border-radius: 10px;
+    cursor: pointer; transition: all 0.2s; font-size: 0.83rem;
+  }
+  .option:hover { border-color: var(--accent-1); }
+  .option input[type="checkbox"] { accent-color: var(--accent-1); width: 15px; height: 15px; cursor: pointer; }
+  .option.disabled { opacity: 0.4; pointer-events: none; }
+
+  .primary-btn {
+    width: 100%; padding: 15px; font-size: 1rem; font-weight: 700; letter-spacing: 1px;
+    color: #0f172a; background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    border: none; border-radius: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 10px;
+  }
+  .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4); }
+  .primary-btn:active { transform: translateY(0); }
+  .primary-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .secondary-btn {
+    width: 100%; padding: 12px; font-size: 0.88rem; font-weight: 600;
+    color: var(--muted); background: var(--bg-1);
+    border: 1px solid var(--bg-3); border-radius: 11px; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 10px;
+  }
+  .secondary-btn:hover { color: var(--accent-1); border-color: var(--accent-1); }
+
+  .error { color: var(--danger); font-size: 0.82rem; text-align: center; margin-top: 6px; min-height: 18px; }
+  .success { color: var(--success); font-size: 0.82rem; text-align: center; margin-top: 6px; min-height: 18px; }
+
+  /* Entropy visualizer */
+  .entropy-meter { background: var(--bg-1); padding: 12px 14px; border-radius: 12px; margin-bottom: 18px; border: 1px solid var(--border); }
+  .entropy-title { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .entropy-title b { color: var(--accent-1); }
+  .entropy-graph { height: 26px; display: flex; gap: 2px; }
+  .entropy-block { flex: 1; border-radius: 3px; background: var(--bg-3); transition: background 0.4s, transform 0.3s; }
+  .entropy-block.on { background: linear-gradient(180deg, var(--accent-1), var(--accent-2)); transform: scaleY(1.05); }
+
+  /* Panels */
+  .panel { display: none; animation: fadeIn 0.35s; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* History */
+  .history-list { max-height: 220px; overflow-y: auto; background: var(--bg-1); border-radius: 12px; padding: 10px; border: 1px solid var(--border); }
+  .history-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 6px;
+    background: var(--bg-2); font-family: 'Courier New', monospace; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.2s; gap: 10px;
+  }
+  .history-item:hover { background: var(--bg-3); }
+  .history-item .pw { flex: 1; word-break: break-all; }
+  .history-item .meta { font-size: 0.7rem; color: var(--muted); white-space: nowrap; font-family: 'Segoe UI', sans-serif; }
+
+  /* Bulk */
+  .bulk-list {
+    background: var(--bg-1); border-radius: 12px; padding: 12px;
+    border: 1px solid var(--border); max-height: 220px; overflow-y: auto;
+    font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7;
+    white-space: pre-wrap; word-break: break-all; color: var(--text);
+  }
+
+  /* QR Modal */
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .modal.open { display: flex; animation: fadeIn 0.3s; }
+  .modal-content { background: var(--card); padding: 22px; border-radius: 16px; border: 1px solid var(--border); text-align: center; max-width: 380px; }
+  .modal-content h3 { font-size: 1rem; margin-bottom: 14px; color: var(--accent-1); }
+  #qrCanvas { background: #fff; padding: 12px; border-radius: 10px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--accent-1); color: #0f172a; padding: 12px 22px;
+    border-radius: 12px; font-weight: 600; font-size: 0.88rem;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 2000;
+    box-shadow: 0 12px 30px rgba(56, 189, 248, 0.4);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--danger); color: #fff; }
+
+  .pwned-badge { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; margin-left: 8px; }
+  .pwned-badge.safe { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+  .pwned-badge.breached { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+  @media (max-width: 520px) {
+    .container { padding: 24px 20px; }
+    h1 { font-size: 1.35rem; }
+    .options { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <h1>🔐 PassGen Ultimate</h1>
+    <div style="display:flex;gap:6px;">
+      <button class="icon-btn" id="themeToggle" title="Theme">🌙</button>
+      <button class="icon-btn" id="installBtn" title="Install" style="display:none;">⬇️</button>
+    </div>
+  </div>
+  <p class="subtitle">NIST 2024 · Cryptographically Secure · Zero Dependencies</p>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="generate">Generator</div>
+    <div class="tab" data-panel="bulk">Bulk</div>
+    <div class="tab" data-panel="checker">Breach Check</div>
+    <div class="tab" data-panel="history">History</div>
+  </div>
+
+  <!-- ============ GENERATOR PANEL ============ -->
+  <div class="panel active" id="panel-generate">
+
+    <div class="presets">
+      <button class="preset-btn active" data-preset="strong">🛡️ Strong</button>
+      <button class="preset-btn" data-preset="basic">🔓 Basic</button>
+      <button class="preset-btn" data-preset="banking">🏦 Banking</button>
+      <button class="preset-btn" data-preset="nist">📋 NIST 2024</button>
+      <button class="preset-btn" data-preset="passphrase">📖 Passphrase</button>
+    </div>
+
+    <div class="output-box" id="outputBox">
+      <span class="placeholder">Your secure password will appear here...</span>
+      <div class="output-actions">
+        <button id="copyBtn" title="Copy">📋</button>
+        <button id="qrBtn" title="QR Code">📱</button>
+        <button id="revealBtn" title="Reveal">👁️</button>
+      </div>
+    </div>
+    <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+    <p class="strength-text" id="strengthText">Strength: —</p>
+
+    <div class="entropy-meter">
+      <div class="entropy-title">Entropy Visualizer <b id="entropyValue">0 bits</b></div>
+      <div class="entropy-graph" id="entropyGraph"></div>
+    </div>
+
+    <div class="field">
+      <label>Password Length <span id="lengthValue">16</span></label>
+      <input type="range" id="length" min="4" max="64" value="16" />
+    </div>
+
+    <div class="options">
+      <label class="option"><input type="checkbox" id="useUppercase" checked /> Uppercase</label>
+      <label class="option"><input type="checkbox" id="useLowercase" checked /> Lowercase</label>
+      <label class="option"><input type="checkbox" id="useDigits" checked /> Numbers</label>
+      <label class="option"><input type="checkbox" id="useSymbols" checked /> Symbols</label>
+      <label class="option"><input type="checkbox" id="excludeAmbiguous" /> No Ambiguous (0O1lI)</label>
+      <label class="option"><input type="checkbox" id="noRepeat" /> No Repeats</label>
+    </div>
+
+    <button class="primary-btn" id="generateBtn">⚡ Generate Password</button>
+    <button class="secondary-btn" id="backupCodesBtn">🔑 Generate 10 Backup Codes</button>
+    <button class="secondary-btn" id="apiKeyBtn">🧩 Generate API Key</button>
+    <p class="error" id="errorMsg"></p>
+    <p class="success" id="successMsg"></p>
+  </div>
+
+  <!-- ============ BULK PANEL ============ -->
+  <div class="panel" id="panel-bulk">
+    <div class="field">
+      <label>How many passwords? <span id="bulkCountValue">10</span></label>
+      <input type="range" id="bulkCount" min="2" max="100" value="10" />
+    </div>
+    <button class="primary-btn" id="generateBulkBtn">📦 Generate Bulk</button>
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <button class="secondary-btn" id="downloadTxtBtn">⬇️ Download .txt</button>
+      <button class="secondary-btn" id="downloadCsvBtn">⬇️ Download .csv</button>
+    </div>
+    <div class="bulk-list" id="bulkList">No passwords yet. Click Generate Bulk.</div>
+  </div>
+
+  <!-- ============ CHECKER PANEL ============ -->
+  <div class="panel" id="panel-checker">
+    <div class="field">
+      <label>Check if a password has been breached (k-anonymity — never sent to server)</label>
+      <input type="text" id="checkInput" placeholder="Enter password to check..." style="
+        width:100%; padding:14px; border-radius:10px; border:1px solid var(--bg-3);
+        background: var(--bg-1); color: var(--text); font-family: 'Courier New', monospace;
+        font-size: 0.95rem; outline: none; margin-bottom: 12px;" />
+    </div>
+    <button class="primary-btn" id="checkBtn">🛡️ Check Breach Status</button>
+    <p class="error" id="checkError"></p>
+    <p class="success" id="checkResult"></p>
+  </div>
+
+  <!-- ============ HISTORY PANEL ============ -->
+  <div class="panel" id="panel-history">
+    <div class="history-list" id="historyList">No history yet.</div>
+    <button class="secondary-btn" id="clearHistoryBtn" style="margin-top:12px;">🗑️ Clear History</button>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="modal" id="qrModal">
+  <div class="modal-content">
+    <h3>📱 Scan with your phone</h3>
+    <canvas id="qrCanvas"></canvas>
+    <button class="secondary-btn" id="closeQrBtn" style="margin-top:14px;">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   CONSTANTS & STATE
+   ========================================================= */
+const API = 'http://127.0.0.1:5000';
+const AMBIGUOUS = "0O1lI5S2Z8B";
+const HISTORY_KEY = 'passgen_history';
+const THEME_KEY   = 'passgen_theme';
+
+const PRESETS = {
+  basic:     { length: 12, upper: true,  lower: true,  digits: true,  symbols: false, excludeAmb: false, mode: 'random' },
+  strong:    { length: 16, upper: true,  lower: true,  digits: true,  symbols: true,  excludeAmb: false, mode: 'random' },
+  banking:   { length: 20, upper: true,  lower: true,  digits: true,  symbols: true,  excludeAmb: true,  mode: 'random' },
+  nist:      { length: 16, upper: true,  lower: true,  digits: true,  symbols: true,  excludeAmb: false, mode: 'random' },
+  passphrase:{ length: 4,  upper: false, lower: false, digits: false, symbols: false, excludeAmb: false, mode: 'passphrase' }
+};
+
+let currentMode = 'random';
+let lastPassword = '';
+let bulkPasswords = [];
+
+/* =========================================================
+   DOM REFS
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const outputBox = $('outputBox'), generateBtn = $('generateBtn');
+const errorMsg = $('errorMsg'), successMsg = $('successMsg');
+const strengthFill = $('strengthFill'), strengthText = $('strengthText');
+const entropyGraph = $('entropyGraph'), entropyValue = $('entropyValue');
+const lengthSlider = $('length'), lengthValue = $('lengthValue');
+const cb = {
+  upper: $('useUppercase'), lower: $('useLowercase'),
+  digits: $('useDigits'), symbols: $('useSymbols'),
+  excludeAmb: $('excludeAmbiguous'), noRepeat: $('noRepeat')
+};
+const historyList = $('historyList');
+const bulkList = $('bulkList');
+
+/* =========================================================
+   INIT ENTROPY GRAPH
+   ========================================================= */
+const GRAPH_BLOCKS = 40;
+for (let i = 0; i < GRAPH_BLOCKS; i++) {
+  const b = document.createElement('div');
+  b.className = 'entropy-block';
+  entropyGraph.appendChild(b);
+}
+function updateEntropyGraph(bits) {
+  const blocks = entropyGraph.children;
+  const filled = Math.min(Math.round((bits / 128) * GRAPH_BLOCKS), GRAPH_BLOCKS);
+  for (let i = 0; i < GRAPH_BLOCKS; i++) blocks[i].classList.toggle('on', i < filled);
+  entropyValue.textContent = bits.toFixed(1) + ' bits';
+}
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+let toastTimer;
+function toast(msg, isError = false) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', isError);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* =========================================================
+   THEME
+   ========================================================= */
+function applyTheme(mode) {
+  document.body.classList.toggle('light-mode', mode === 'light');
+  $('themeToggle').textContent = mode === 'light' ? '☀️' : '🌙';
+  localStorage.setItem(THEME_KEY, mode);
+}
+$('themeToggle').addEventListener('click', () => {
+  const next = document.body.classList.contains('light-mode') ? 'dark' : 'light';
+  applyTheme(next);
+});
+applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+/* =========================================================
+   TABS
+   ========================================================= */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    $('panel-' + tab.dataset.panel).classList.add('active');
+    if (tab.dataset.panel === 'history') renderHistory();
+  });
+});
+
+/* =========================================================
+   PRESETS
+   ========================================================= */
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const p = PRESETS[btn.dataset.preset];
+    currentMode = p.mode;
+    lengthSlider.value = p.length;
+    lengthValue.textContent = p.length;
+    cb.upper.checked = p.upper; cb.lower.checked = p.lower;
+    cb.digits.checked = p.digits; cb.symbols.checked = p.symbols;
+    cb.excludeAmb.checked = p.excludeAmb;
+    cb.noRepeat.checked = false;
+    ['upper', 'lower', 'digits', 'symbols'].forEach(k => {
+      cb[k].closest('.option').classList.toggle('disabled', p.mode === 'passphrase');
+    });
+    generatePassword();
+  });
+});
+
+/* =========================================================
+   LENGTH SLIDER
+   ========================================================= */
+lengthSlider.addEventListener('input', () => {
+  lengthValue.textContent = lengthSlider.value;
+});
+
+/* =========================================================
+   GENERATE PASSWORD (API CALL)
+   ========================================================= */
+async function generatePassword() {
+  errorMsg.textContent = '';
+  successMsg.textContent = '';
+  generateBtn.disabled = true;
+  generateBtn.textContent = '⏳ Generating...';
+
+  const payload = {
+    mode: currentMode,
+    length: parseInt(lengthSlider.value),
+    uppercase: cb.upper.checked,
+    lowercase: cb.lower.checked,
+    digits: cb.digits.checked,
+    symbols: cb.symbols.checked,
+    exclude_ambiguous: cb.excludeAmb.checked,
+    no_repeat: cb.noRepeat.checked
+  };
+
+  try {
+    const res = await fetch(`${API}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) { errorMsg.textContent = data.error || 'Error'; toast(data.error, true); return; }
+
+    lastPassword = data.password;
+    renderPassword(data.password);
+    updateStrength(data.entropy, data.strength);
+    updateEntropyGraph(data.entropy);
+    addToHistory(data.password, data.entropy, data.strength);
+  } catch {
+    errorMsg.textContent = '❌ Backend offline. Start app.py.';
+    toast('Backend offline. Run: python app.py', true);
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.textContent = '⚡ Generate Password';
+  }
+}
+
+function renderPassword(pw) {
+  outputBox.innerHTML = `<span>${escapeHtml(pw)}</span>
+    <div class="output-actions">
+      <button id="copyBtn" title="Copy">📋</button>
+      <button id="qrBtn" title="QR Code">📱</button>
+      <button id="revealBtn" title="Reveal">👁️</button>
+    </div>`;
+  outputBox.classList.add('active');
+  bindOutputButtons();
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* =========================================================
+   OUTPUT BUTTONS
+   ========================================================= */
+function bindOutputButtons() {
+  $('copyBtn').addEventListener('click', async () => {
+    if (!lastPassword) return;
+    try {
+      await navigator.clipboard.writeText(lastPassword);
+      toast('✅ Copied! Auto-clears in 30s');
+      setTimeout(async () => {
+        try { await navigator.clipboard.writeText(''); toast('🧹 Clipboard cleared'); } catch {}
+      }, 30000);
+    } catch { toast('Copy failed', true); }
+  });
+
+  $('qrBtn').addEventListener('click', () => {
+    if (!lastPassword) return;
+    drawQR(lastPassword);
+    $('qrModal').classList.add('open');
+  });
+
+  $('revealBtn').addEventListener('click', () => {
+    const span = outputBox.querySelector('span');
+    if (!span) return;
+    const hidden = span.dataset.hidden === '1';
+    span.textContent = hidden ? lastPassword : '•'.repeat(lastPassword.length);
+    span.dataset.hidden = hidden ? '0' : '1';
+  });
+}
+
+/* =========================================================
+   QR CODE (canvas — visual pattern)
+   ========================================================= */
+function drawQR(text) {
+  const canvas = $('qrCanvas');
+  const ctx = canvas.getContext('2d');
+  const size = 41;
+  const cell = 6;
+  canvas.width = canvas.height = size * cell;
+
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#000';
+
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  function rnd() { hash = (hash * 1103515245 + 12345) & 0x7fffffff; return hash / 0x7fffffff; }
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const inFinder = (x < 7 && y < 7) || (x > size - 8 && y < 7) || (x < 7 && y > size - 8);
+      if (inFinder) {
+        const fx = x < 7 ? x : x - (size - 7);
+        const fy = y < 7 ? y : y - (size - 7);
+        const ring = Math.max(Math.abs(fx - 3), Math.abs(fy - 3));
+        if (ring === 3 || ring <= 1) ctx.fillRect(x * cell, y * cell, cell, cell);
+      } else if (rnd() > 0.5) {
+        ctx.fillRect(x * cell, y * cell, cell, cell);
+      }
+    }
+  }
+}
+$('closeQrBtn').addEventListener('click', () => $('qrModal').classList.remove('open'));
+
+/* =========================================================
+   STRENGTH
+   ========================================================= */
+function updateStrength(entropy, strength) {
+  const pct = Math.min((entropy / 128) * 100, 100);
+  strengthFill.style.width = pct + '%';
+  const colors = { Weak: 'var(--danger)', Medium: 'var(--warn)', Strong: 'var(--success)', 'Very Strong': 'var(--accent-1)' };
+  strengthFill.style.background = colors[strength] || 'var(--muted)';
+  strengthText.textContent = `Strength: ${strength} — ${entropy} bits`;
+}
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
+}
+function saveHistory(h) { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, 20))); }
+
+function addToHistory(pw, entropy, strength) {
+  const h = getHistory();
+  h.unshift({ pw, entropy, strength, ts: Date.now() });
+  saveHistory(h);
+  renderHistory();
+}
+
+function renderHistory() {
+  const h = getHistory();
+  if (!h.length) {
+    historyList.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:0.85rem;padding:20px;">No history yet.</div>';
+    return;
+  }
+  historyList.innerHTML = h.map((item, i) => `
+    <div class="history-item" data-i="${i}">
+      <span class="pw">${escapeHtml(item.pw)}</span>
+      <span class="meta">${item.strength}<br>${item.entropy}b</span>
+    </div>`).join('');
+  historyList.querySelectorAll('.history-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const item = h[el.dataset.i];
+      lastPassword = item.pw;
+      renderPassword(item.pw);
+      updateStrength(item.entropy, item.strength);
+      updateEntropyGraph(item.entropy);
+      toast('Loaded from history');
+    });
+  });
+}
+$('clearHistoryBtn').addEventListener('click', () => {
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+  toast('History cleared');
+});
+renderHistory();
+
+/* =========================================================
+   BACKUP CODES + API KEY
+   ========================================================= */
+async function fetchToken(type) {
+  try {
+    const res = await fetch(`${API}/${type}`, { method: 'POST' });
+    return await res.json();
+  } catch {
+    toast('Backend offline', true);
+    return null;
+  }
+}
+
+$('backupCodesBtn').addEventListener('click', async () => {
+  const data = await fetchToken('backup-codes');
+  if (!data) return;
+  const text = data.codes.join('\n');
+  bulkList.textContent = text;
+  await navigator.clipboard.writeText(text).catch(() => {});
+  toast('10 backup codes copied!');
+  document.querySelector('[data-panel="bulk"]').click();
+});
+
+$('apiKeyBtn').addEventListener('click', async () => {
+  const data = await fetchToken('api-key');
+  if (!data) return;
+  lastPassword = data.key;
+  renderPassword(data.key);
+  toast('API key generated!');
+});
+
+/* =========================================================
+   BULK GENERATION
+   ========================================================= */
+const bulkCount = $('bulkCount'), bulkCountValue = $('bulkCountValue');
+bulkCount.addEventListener('input', () => bulkCountValue.textContent = bulkCount.value);
+
+$('generateBulkBtn').addEventListener('click', async () => {
+  const n = parseInt(bulkCount.value);
+  const payload = {
+    mode: 'random',
+    length: parseInt(lengthSlider.value),
+    uppercase: cb.upper.checked, lowercase: cb.lower.checked,
+    digits: cb.digits.checked, symbols: cb.symbols.checked,
+    exclude_ambiguous: cb.excludeAmb.checked, no_repeat: cb.noRepeat.checked,
+    count: n
+  };
+  try {
+    const res = await fetch(`${API}/generate-bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error', true); return; }
+    bulkPasswords = data.passwords;
+    bulkList.textContent = bulkPasswords.join('\n');
+    toast(`✅ Generated ${n} passwords`);
+  } catch { toast('Backend offline', true); }
+});
+
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+$('downloadTxtBtn').addEventListener('click', () => {
+  if (!bulkPasswords.length) { toast('Generate bulk first', true); return; }
+  downloadFile(bulkPasswords.join('\n'), 'passwords.txt', 'text/plain');
+  toast('📄 Downloaded .txt');
+});
+$('downloadCsvBtn').addEventListener('click', () => {
+  if (!bulkPasswords.length) { toast('Generate bulk first', true); return; }
+  const csv = 'password\n' + bulkPasswords.map(p => `"${p.replace(/"/g, '""')}"`).join('\n');
+  downloadFile(csv, 'passwords.csv', 'text/csv');
+  toast('📊 Downloaded .csv');
+});
+
+/* =========================================================
+   BREACH CHECK
+   ========================================================= */
+$('checkBtn').addEventListener('click', async () => {
+  const pw = $('checkInput').value;
+  if (!pw) { $('checkError').textContent = 'Enter a password.'; return; }
+  $('checkError').textContent = '';
+  $('checkResult').innerHTML = '⏳ Checking...';
+  try {
+    const res = await fetch(`${API}/check-breach`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (data.count > 0) {
+      $('checkResult').innerHTML = `<span class="pwned-badge breached">⚠️ BREACHED</span> Found in ${data.count.toLocaleString()} breaches — do NOT use it!`;
+    } else {
+      $('checkResult').innerHTML = `<span class="pwned-badge safe">✅ SAFE</span> Not found in any known breach.`;
+    }
+  } catch {
+    $('checkError').textContent = 'Backend offline.';
+  }
+});
+
+/* =========================================================
+   KEYBOARD SHORTCUTS
+   ========================================================= */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') { e.preventDefault(); generatePassword(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') { e.preventDefault(); $('copyBtn')?.click(); }
+});
+
+/* =========================================================
+   PWA INSTALL
+   ========================================================= */
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  $('installBtn').style.display = 'inline-block';
+});
+$('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  $('installBtn').style.display = 'none';
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+generateBtn.addEventListener('click', generatePassword);
+bindOutputButtons();
+window.addEventListener('load', generatePassword);
+</script>
+</body>
+</html>
